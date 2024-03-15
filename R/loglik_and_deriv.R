@@ -1,3 +1,28 @@
+#' Log likelihood of a generalized linear model at a point
+#'
+#' @details This function computes the log likelihood of data in a generalized linear model at a given value of the regression coefficient.
+#'
+#' @param reg_coef a p-length numeric vector at which to evaluate the log likelihood, possibly including an intercept.
+#' @param design a n x p design matrix of numeric or factor predictors, possibly including an intercept.
+#' @param outcome a n-length numeric vector of outcomes.
+#' @param model_name a character indicating the link function between the linear predictors and the mean of the outcome. Can take value "linear", "logit", or "poisson"
+#' @param ... optional additional arguments, e.g., noise_var, the scalar variance for a linear model.
+#'
+#' @return A scalar, the log likelihood of the data at beta.
+#'
+#' @export
+calc_loglik <- function(reg_coef, design, outcome, model_name, ...){
+  if (model_name == "linear"){
+    if (missing(noise_var)){
+      return(calc_linear_loglik(reg_coef, design, outcome))
+    } else{
+      return(calc_linear_loglik(reg_coef, design, outcome, noise_var))
+    }
+  } else if (model_name == "logit"){
+    return(calc_logit_loglik(reg_coef, design, outcome))
+  } # else stop(sprintf("The model %s is not supported.", model_name))
+}
+
 calc_linear_loglik <- function(reg_coef, design, outcome, noise_var = 1) {
   predicted_val <- design %*% reg_coef
   loglik <- - 0.5 * sum((outcome - predicted_val)^2) / noise_var

@@ -3,6 +3,7 @@
 S3method(coef,hglm)
 S3method(print,hglm)
 S3method(vcov,hglm)
+export(calc_loglik)
 export(hiper_glm)
 importFrom(Rcpp,sourceCpp)
 useDynLib(hiperglm, .registration = TRUE)
