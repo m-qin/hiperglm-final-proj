@@ -51,7 +51,7 @@ calc_linear_loglink_deriv <- function(reg_coef, design, outcome, noise_var = 1){
   deriv <- as.vector(deriv)
   return(deriv)
 }
-# 
+
 # calc_linear_hessian_inverse <- function(reg_coef, design, outcome, noise_var = 1){
 #   return(0)
 # }

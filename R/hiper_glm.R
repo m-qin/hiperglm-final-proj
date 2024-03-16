@@ -72,7 +72,6 @@ solve_via_newton <- function(model, option) {
 }
 
 take_one_newton_step <- function(coef_est, model, option) {
-  design <- model$design; outcome <- model$outcome
   solver <- ifelse(is.null(option$solver), "weighted-least-sq", option$solver)
   if (solver == "weighted-least-sq") {
     loglink_grad <- calc_loglink_deriv(coef_est, model, order = 1)
@@ -83,7 +82,7 @@ take_one_newton_step <- function(coef_est, model, option) {
         # back on a Newton step with explicit computation of weighted Hessian. 
     }
     ls_target_vec <- loglink_grad / weight
-    coef_update <- solve_least_sq_via_qr(design, ls_target_vec, weight)$solution
+    coef_update <- solve_least_sq_via_qr(model$design, ls_target_vec, weight)$solution
   } else { # if solver == "normal-eq"
     grad <- calc_grad(coef_est, model)
     hess <- calc_hessian(coef_est, model)
