@@ -1,4 +1,4 @@
-compare_anlytical_and_numerical_grad <- function(
+compare_analytical_and_numerical_grad <- function(
   model_name, n_obs = 32, n_pred = 4, n_test = 10, data_seed = 1918, loc_seed = 615
 ) {
   n_obs <- 32; n_pred <- 4
@@ -40,12 +40,12 @@ compare_anlytical_and_numerical_grad <- function(
 
 test_that("linear model's analytical gradient is close to numerical one", {
   expect_true(
-    compare_anlytical_and_numerical_grad("linear")
+    compare_analytical_and_numerical_grad("linear")
   )
 })
 
 test_that("logit model's analytical gradient is close to numerical one", {
   expect_true(
-    compare_anlytical_and_numerical_grad("logit")
+    compare_analytical_and_numerical_grad("logit")
   )
 })
