@@ -19,22 +19,21 @@ new_regression_model <- function(design, outcome, model_name, noise_var) {
 find_mle <- function(model, option) {
   if (is.null(option$mle_solver)) {
     if (model$name == 'linear') {
-      result <- solve_via_least_sq(model$design, model$outcome)
+      result <- solve_via_least_sq(model)
     } else {
-      result <- solve_via_newton(
-        model$design, model$outcome, option$n_max_iter, option$rel_tol, option$abs_tol
-      )
+      result <- solve_via_newton(model, option)
     }
   } else {
-    result <- solve_via_optim(model$design, model$outcome, model$name, option$mle_solver, model$noise_var)
+    result <- solve_via_optim(model, option)
   }
   return(result)
 }
 
-solve_via_least_sq <- function(design, outcome) {
+solve_via_least_sq <- function(model) {
+  design <- model$design; outcome <- model$outcome
   ls_result <- solve_least_sq_via_qr(design, outcome)
   mle_coef <- ls_result$solution
-  noise_var <- mean((outcome - design %*% mle_coef)^2)
+  noise_var <- mean((outcome - design %*% mle_coef)^2) # not yet implemented: more general GLS (user-inputted covariance structure for errors)
   n_obs <- nrow(design); n_pred <- ncol(design)
   noise_var <- noise_var / (1 - n_pred / n_obs) 
     # Use the same nearly-unbiased estimator as in `stats::lm`
@@ -42,10 +41,11 @@ solve_via_least_sq <- function(design, outcome) {
   return(list(coef = mle_coef, cov_est = cov_est))
 }
 
-solve_via_newton <- function(design, outcome, n_max_iter, rel_tol, abs_tol) {
-  if (is.null(n_max_iter)) { n_max_iter <- 25L }
-  if (is.null(rel_tol)) { rel_tol <- 1e-6 }
-  if (is.null(abs_tol)) { abs_tol <- 1e-6 }
+solve_via_newton <- function(model, option) {
+  design <- model$design; outcome <- model$outcome
+  n_max_iter <- ifelse(is.null(option$n_max_iter), 25L, option$n_max_iter)
+  rel_tol <- ifelse(is.null(option$rel_tol), 1e-6, option$rel_tol)
+  abs_tol <- ifelse(is.null(option$abs_tol), 1e-6, option$abs_tol)
   coef_est <- rep(0, ncol(design))
   n_iter <- 0L
   max_iter_reached <- FALSE
@@ -94,7 +94,9 @@ take_one_newton_step <- function(
   return(coef_est = coef_est)
 }
 
-solve_via_optim <- function(design, outcome, model_name, method, noise_var) {
+solve_via_optim <- function(model, option) {
+  design <- model$design; outcome <- model$outcome; model_name <- model$name; noise_var <- model$noise_var
+  method <- option$mle_solver
   init_coef <- rep(0, ncol(design))
   if (model_name == 'linear') {
     obj_fn <- function (coef) {
