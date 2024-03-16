@@ -16,6 +16,14 @@ calc_loglink_deriv <- function(reg_coef, model, order = 1){
   }
 }
 
+calc_grad <- function(reg_coef, model){
+  if (model$name == "linear"){
+    return(calc_linear_grad(reg_coef, model$design, model$outcome, model$noise_var))
+  } else if (model$name == "logit"){
+    return(calc_logit_grad(reg_coef, model$design, model$outcome))
+  }
+}
+
 calc_linear_loglik <- function(reg_coef, design, outcome, noise_var = 1) {
   predicted_val <- design %*% reg_coef
   loglik <- - 0.5 * sum((outcome - predicted_val)^2) / noise_var

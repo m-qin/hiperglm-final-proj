@@ -85,7 +85,7 @@ take_one_newton_step <- function(coef_est, model, option) {
     ls_target_vec <- loglink_grad / weight
     coef_update <- solve_least_sq_via_qr(design, ls_target_vec, weight)$solution
   } else { # if solver == "normal-eq"
-    grad <- calc_logit_grad(coef_est, design, outcome)
+    grad <- calc_grad(coef_est, model)
     hess <- calc_logit_hessian(coef_est, design, outcome)
     coef_update <- - solve(hess, grad)
   }
@@ -94,23 +94,15 @@ take_one_newton_step <- function(coef_est, model, option) {
 }
 
 solve_via_optim <- function(model, option) {
-  design <- model$design; outcome <- model$outcome; model_name <- model$name; noise_var <- model$noise_var
-  method <- option$mle_solver
-  init_coef <- rep(0, ncol(design))
+  init_coef <- rep(0, ncol(model$design))
   obj_fn <- function (coef) {
     calc_loglik(coef, model)
   }
-  if (model_name == 'linear') {
-    obj_grad <- function (coef) {
-      calc_linear_grad(coef, design, outcome, noise_var)
-    }
-  } else {
-    obj_grad <- function (coef) {
-      calc_logit_grad(coef, design, outcome)
-    }
+  obj_grad <- function (coef) {
+    calc_grad(coef, model)
   }
   optim_result <- stats::optim(
-    init_coef, obj_fn, obj_grad, method = method,
+    init_coef, obj_fn, obj_grad, method = option$mle_solver,
     control = list(fnscale = -1) # Maximize the function
   )
   optim_converged <- (optim_result$convergence == 0L)
