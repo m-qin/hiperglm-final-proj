@@ -1,17 +1,17 @@
 #' @export
-hiper_glm <- function(design, outcome, model_name = "linear", option = list()) {
+hiper_glm <- function(design, outcome, model_name = "linear", option = list(), noise_var = 1) {
   supported_model <- c("linear", "logit")
   if (!(model_name %in% supported_model)) {
     stop(sprintf("The model %s is not supported.", model_name))
   }
-  model <- new_regression_model(design, outcome, model_name)
+  model <- new_regression_model(design, outcome, model_name, noise_var)
   hglm_out <- find_mle(model, option)
   class(hglm_out) <- "hglm"
   return(hglm_out)
 }
 
-new_regression_model <- function(design, outcome, model_name) {
-  model <- list(design = design, outcome = outcome, name = model_name)
+new_regression_model <- function(design, outcome, model_name, noise_var) {
+  model <- list(design = design, outcome = outcome, name = model_name, noise_var = noise_var)
   class(model) <- paste(model_name, "model", sep = "_")
   return(model)
 }
@@ -26,7 +26,7 @@ find_mle <- function(model, option) {
       )
     }
   } else {
-    result <- solve_via_optim(model$design, model$outcome, model$name, option$mle_solver)
+    result <- solve_via_optim(model$design, model$outcome, model$name, option$mle_solver, model$noise_var)
   }
   return(result)
 }
@@ -94,14 +94,14 @@ take_one_newton_step <- function(
   return(coef_est = coef_est)
 }
 
-solve_via_optim <- function(design, outcome, model_name, method) {
+solve_via_optim <- function(design, outcome, model_name, method, noise_var) {
   init_coef <- rep(0, ncol(design))
   if (model_name == 'linear') {
     obj_fn <- function (coef) {
-      calc_linear_loglik(coef, design, outcome) 
+      calc_linear_loglik(coef, design, outcome, noise_var) 
     }
     obj_grad <- function (coef) {
-      calc_linear_grad(coef, design, outcome)
+      calc_linear_grad(coef, design, outcome, noise_var)
     }
   } else {
     obj_fn <- function (coef) {
