@@ -86,7 +86,7 @@ take_one_newton_step <- function(coef_est, model, option) {
     coef_update <- solve_least_sq_via_qr(design, ls_target_vec, weight)$solution
   } else { # if solver == "normal-eq"
     grad <- calc_grad(coef_est, model)
-    hess <- calc_logit_hessian(coef_est, design, outcome)
+    hess <- calc_hessian(coef_est, model)
     coef_update <- - solve(hess, grad)
   }
   coef_est <- coef_est + coef_update

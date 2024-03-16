@@ -4,25 +4,12 @@ compare_analytical_and_numerical_grad <- function(
   n_obs <- 32; n_pred <- 4
   data <- simulate_data(n_obs, n_pred, model_name, seed = data_seed)
   design <- data$design; outcome <- data$outcome
-  # The `do.call` trick below might seem like a clever solution and a 
-  # simpler-to-implement alternative to S3 methods. However, it tends to make 
-  # the code less readable and harder to maintain. For example, you wouldn't 
-  # know the exact function being called by `sprintf("calc_%s_loglik", model)` 
-  # without reading other parts of code. It also obscures the usage of those 
-  # functions within codebase; e.g. `git grep "calc_logit_grad"` would fail to 
-  # detect its usage here. The trick is used here only for didactic/illustrative 
-  # purpose --- I advise against its use in general.
+  model <- new_regression_model(design, outcome, model_name)
   loglik_func <- function (coef) { 
-    do.call(
-      sprintf("calc_%s_loglik", model_name), 
-      list(coef, design, outcome)
-    )
+    calc_loglik(coef, model)
   }
   grad_func <- function (coef) {
-    do.call(
-      sprintf("calc_%s_grad", model_name), 
-      list(coef, design, outcome)
-    )
+    calc_grad(coef, model)
   }
   set.seed(loc_seed)
   grads_are_close <- TRUE
