@@ -75,9 +75,8 @@ take_one_newton_step <- function(coef_est, model, option) {
   design <- model$design; outcome <- model$outcome
   solver <- ifelse(is.null(option$solver), "weighted-least-sq", option$solver)
   if (solver == "weighted-least-sq") {
-    loglink_grad <- 
-      calc_logit_loglink_deriv(coef_est, design, outcome, order = 1)
-    weight <- calc_logit_loglink_deriv(coef_est, design, outcome, order = 2)
+    loglink_grad <- calc_loglink_deriv(coef_est, model, order = 1)
+    weight <- calc_loglink_deriv(coef_est, model, order = 2)
     if (any(weight == 0)) {
       stop("Exact 0 or 1 found in predicted probability while solving for MLE.")
         # TODO: pursue alternative path forward in this case. Maybe just fall 
