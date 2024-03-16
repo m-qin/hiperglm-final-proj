@@ -10,7 +10,7 @@ hiper_glm <- function(design, outcome, model_name = "linear", option = list(), n
   return(hglm_out)
 }
 
-new_regression_model <- function(design, outcome, model_name, noise_var) {
+new_regression_model <- function(design, outcome, model_name, noise_var = 1) {
   model <- list(design = design, outcome = outcome, name = model_name, noise_var = noise_var)
   class(model) <- paste(model_name, "model", sep = "_")
   return(model)
@@ -23,7 +23,7 @@ find_mle <- function(model, option) {
     } else {
       result <- solve_via_newton(model, option)
     }
-  } else {
+  } else { # if option$mle_solver == 'BFGS'
     result <- solve_via_optim(model, option)
   }
   return(result)
@@ -50,11 +50,11 @@ solve_via_newton <- function(model, option) {
   n_iter <- 0L
   max_iter_reached <- FALSE
   converged <- FALSE
-  curr_loglik <- calc_logit_loglik(coef_est, design, outcome)
+  curr_loglik <- calc_loglik(coef_est, model)
   while (!(converged || max_iter_reached)) {
     prev_loglik <- curr_loglik
-    coef_est <- take_one_newton_step(coef_est, design, outcome)
-    curr_loglik <- calc_logit_loglik(coef_est, design, outcome)
+    coef_est <- take_one_newton_step(coef_est, model, option)
+    curr_loglik <- calc_loglik(coef_est, model)
     converged <- (
       2 * abs(curr_loglik - prev_loglik) < (abs_tol + rel_tol * abs(curr_loglik))
     )
@@ -71,9 +71,9 @@ solve_via_newton <- function(model, option) {
   ))
 }
 
-take_one_newton_step <- function(
-    coef_est, design, outcome, solver = "weighted-least-sq"
-) {
+take_one_newton_step <- function(coef_est, model, option) {
+  design <- model$design; outcome <- model$outcome
+  solver <- ifelse(is.null(option$solver), "weighted-least-sq", option$solver)
   if (solver == "weighted-least-sq") {
     loglink_grad <- 
       calc_logit_loglink_deriv(coef_est, design, outcome, order = 1)
@@ -85,7 +85,7 @@ take_one_newton_step <- function(
     }
     ls_target_vec <- loglink_grad / weight
     coef_update <- solve_least_sq_via_qr(design, ls_target_vec, weight)$solution
-  } else {
+  } else { # if solver == "normal-eq"
     grad <- calc_logit_grad(coef_est, design, outcome)
     hess <- calc_logit_hessian(coef_est, design, outcome)
     coef_update <- - solve(hess, grad)
@@ -98,17 +98,14 @@ solve_via_optim <- function(model, option) {
   design <- model$design; outcome <- model$outcome; model_name <- model$name; noise_var <- model$noise_var
   method <- option$mle_solver
   init_coef <- rep(0, ncol(design))
+  obj_fn <- function (coef) {
+    calc_loglik(coef, model)
+  }
   if (model_name == 'linear') {
-    obj_fn <- function (coef) {
-      calc_linear_loglik(coef, design, outcome, noise_var) 
-    }
     obj_grad <- function (coef) {
       calc_linear_grad(coef, design, outcome, noise_var)
     }
   } else {
-    obj_fn <- function (coef) {
-      calc_logit_loglik(coef, design, outcome) 
-    }
     obj_grad <- function (coef) {
       calc_logit_grad(coef, design, outcome)
     }

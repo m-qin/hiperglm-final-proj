@@ -72,5 +72,5 @@ simulate_data <- function(
       outcome <- list(n_success = n_success, n_trial = n_trial)
     }
   }
-  return(list(design = design, outcome = outcome, coef_true = coef_true))
+  return(list(design = design, outcome = outcome, coef_true = coef_true, model_name = model_name))
 }

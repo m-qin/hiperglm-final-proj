@@ -1,19 +1,19 @@
 #' @export
-calc_loglik <- function(reg_coef, design, outcome, model_name, ...){
-  if (model_name == "linear"){
-    return(calc_linear_loglik(reg_coef, design, outcome, noise_var))
-  } else if (model_name == "logit"){
-    return(calc_logit_loglik(reg_coef, design, outcome))
+calc_loglik <- function(reg_coef, model){
+  if (model$name == "linear"){
+    return(calc_linear_loglik(reg_coef, model$design, model$outcome, model$noise_var))
+  } else if (model$name == "logit"){
+    return(calc_logit_loglik(reg_coef, model$design, model$outcome))
   }
 }
 
-calc_linear_loglik <- function(reg_coef, design, outcome, noise_var) {
+calc_linear_loglik <- function(reg_coef, design, outcome, noise_var = 1) {
   predicted_val <- design %*% reg_coef
   loglik <- - 0.5 * sum((outcome - predicted_val)^2) / noise_var
   return(loglik)
 }
 
-calc_linear_grad <- function(reg_coef, design, outcome, noise_var) {
+calc_linear_grad <- function(reg_coef, design, outcome, noise_var = 1) {
   predicted_val <- design %*% reg_coef
   grad <- t(design) %*% (outcome - predicted_val) / noise_var
   grad <- as.vector(grad)
