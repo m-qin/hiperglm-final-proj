@@ -22,8 +22,8 @@ calc_loglink_deriv <- function(reg_coef, model, order = 1){
 
 calc_grad <- function(reg_coef, model){
   design <- model$design
-  weight <- calc_loglink_deriv(reg_coef, model)
-  grad <- t(design) %*% weight # formula for canonical links
+  loglink_deriv <- calc_loglink_deriv(reg_coef, model)
+  grad <- t(design) %*% loglink_deriv # formula for canonical links
   grad <- as.vector(grad)
   return(grad)
 }
