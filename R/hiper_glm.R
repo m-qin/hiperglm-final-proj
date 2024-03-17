@@ -30,10 +30,10 @@ find_mle <- function(model, option) {
 }
 
 solve_via_least_sq <- function(model) {
-  design <- model$design; outcome <- model$outcome
-  ls_result <- solve_least_sq_via_qr(design, outcome)
+  design <- model$design; outcome <- model$outcome; noise_var <- model$noise_var
+  ls_result <- solve_least_sq_via_qr(design, outcome, noise_var) # not yet implemented: non-scalar noise_var (e.g., GLS)
   mle_coef <- ls_result$solution
-  noise_var <- mean((outcome - design %*% mle_coef)^2) # not yet implemented: more general GLS (user-inputted covariance structure for errors)
+  noise_var <- mean((outcome - design %*% mle_coef)^2)
   n_obs <- nrow(design); n_pred <- ncol(design)
   noise_var <- noise_var / (1 - n_pred / n_obs) 
     # Use the same nearly-unbiased estimator as in `stats::lm`
@@ -42,11 +42,10 @@ solve_via_least_sq <- function(model) {
 }
 
 solve_via_newton <- function(model, option) {
-  design <- model$design; outcome <- model$outcome
   n_max_iter <- ifelse(is.null(option$n_max_iter), 25L, option$n_max_iter)
   rel_tol <- ifelse(is.null(option$rel_tol), 1e-6, option$rel_tol)
   abs_tol <- ifelse(is.null(option$abs_tol), 1e-6, option$abs_tol)
-  coef_est <- rep(0, ncol(design))
+  coef_est <- rep(0, ncol(model$design))
   n_iter <- 0L
   max_iter_reached <- FALSE
   converged <- FALSE
@@ -64,7 +63,7 @@ solve_via_newton <- function(model, option) {
   if (max_iter_reached && !converged) {
     warning("Newton's method did not converge. The estimates may be meaningless.")
   }
-  cov_est <- - calc_logit_hessian_inverse(coef_est, design, outcome)
+  cov_est <- - calc_hessian_inverse(coef_est, model)
   return(list(
     coef = coef_est, cov = cov_est, 
     converged = converged, n_iter = n_iter

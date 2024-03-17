@@ -31,13 +31,13 @@ calc_hessian <- function(reg_coef, model) {
   return(hess)
 }
 
-# calc_hessian_inverse <- function(reg_coef, model){
-#   if (model$name == "linear"){
-#     return(calc_linear_hessian_inverse(reg_coef, model$design, model$outcome, model$noise_var))
-#   } else if (model$name == "logit"){
-#     return(calc_logit_hessian_inverse(reg_coef, model$design, model$outcome))
-#   }
-# }
+calc_hessian_inverse <- function(reg_coef, model){
+  if (model$name == "linear"){
+    return(calc_linear_hessian_inverse(reg_coef, model$design, model$outcome, model$noise_var))
+  } else if (model$name == "logit"){
+    return(calc_logit_hessian_inverse(reg_coef, model$design, model$outcome))
+  }
+}
 
 calc_linear_loglik <- function(reg_coef, design, outcome, noise_var = 1) {
   predicted_val <- design %*% reg_coef
@@ -52,9 +52,15 @@ calc_linear_loglink_deriv <- function(reg_coef, design, outcome, noise_var = 1){
   return(deriv)
 }
 
-# calc_linear_hessian_inverse <- function(reg_coef, design, outcome, noise_var = 1){
-#   return(0)
-# }
+calc_linear_hessian_inverse <- function(reg_coef, design, outcome, noise_var = 1){
+  R <- solve_least_sq_via_qr_cpp_eig(design, outcome)$R
+  unweighted_inverse <- - invert_gram_mat_from_qr(R)
+  n_obs <- nrow(design); n_pred <- ncol(design)
+  noise_var <- mean((outcome - design %*% reg_coef)^2) /
+    (1 - n_pred / n_obs)
+  inverse <- noise_var * unweighted_inverse
+  return(inverse)
+}
 
 calc_logit_loglik <- function(reg_coef, design, outcome) {
   if (is.list(outcome)) {
