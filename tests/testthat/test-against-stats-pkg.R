@@ -1,8 +1,21 @@
-test_that("`hglm` linear model est coincides with `lm` model", {
+test_that("`hglm` linear model est by least sq coincides with `lm` model", {
   data <- simulate_data(32, 4, intercept = 1, seed = 1918)
   design <- data$design; outcome <- data$outcome
   lm_out <- stats::lm(outcome ~ design + 0)
   hglm_out <- hiper_glm(design, outcome)
+  expect_true(are_all_close(coef(hglm_out), coef(lm_out)))
+  expect_true(are_all_close(  
+    as.vector(vcov(hglm_out)), as.vector(vcov(lm_out))
+  ))
+})
+
+test_that("`hglm` linear model est by newton coincides with `lm` model", {
+  data <- simulate_data(32, 4, intercept = 1, seed = 1918)
+  design <- data$design; outcome <- data$outcome
+  lm_out <- stats::lm(outcome ~ design + 0)
+  hglm_model <- new_regression_model(design, outcome, "linear")
+  hglm_out <- solve_via_newton(hglm_model, option = list())
+  class(hglm_out) <- "hglm"
   expect_true(are_all_close(coef(hglm_out), coef(lm_out)))
   expect_true(are_all_close(  
     as.vector(vcov(hglm_out)), as.vector(vcov(lm_out))

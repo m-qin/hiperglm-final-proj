@@ -12,7 +12,7 @@ calc_loglik <- function(reg_coef, model){
 #' @export
 calc_loglink_deriv <- function(reg_coef, model, order = 1){
   if (model$name == "linear"){
-    return(calc_linear_loglink_deriv(reg_coef, model$design, model$outcome, model$noise_var))
+    return(calc_linear_loglink_deriv(reg_coef, model$design, model$outcome, model$noise_var, order))
   } else if (model$name == "logit"){
     return(calc_logit_loglink_deriv(reg_coef, model$design, model$outcome, order))
   } else if (model$name == "poisson"){
@@ -22,16 +22,16 @@ calc_loglink_deriv <- function(reg_coef, model, order = 1){
 
 calc_grad <- function(reg_coef, model){
   design <- model$design
-  loglink_deriv <- calc_loglink_deriv(reg_coef, model)
-  grad <- t(design) %*% loglink_deriv # formula for canonical links
+  weight <- calc_loglink_deriv(reg_coef, model)
+  grad <- t(design) %*% weight # formula for canonical links
   grad <- as.vector(grad)
   return(grad)
 }
 
 calc_hessian <- function(reg_coef, model) {
   design <- model$design
-  weight <- calc_loglink_deriv(reg_coef, model, order = 2)
-  hess <- - t(design) %*% (outer(weight, rep(1, ncol(design))) * design)
+  loglink_deriv <- calc_loglink_deriv(reg_coef, model, order = 2)
+  hess <- - t(design) %*% (outer(loglink_deriv, rep(1, ncol(design))) * design)
   return(hess)
 }
 
@@ -49,9 +49,15 @@ calc_linear_loglik <- function(reg_coef, design, outcome, noise_var = 1) {
   return(loglik)
 }
 
-calc_linear_loglink_deriv <- function(reg_coef, design, outcome, noise_var = 1){
+calc_linear_loglink_deriv <- function(reg_coef, design, outcome, noise_var = 1, order = 1){
   predicted_val <- design %*% reg_coef
-  deriv <- (outcome - predicted_val) / noise_var
+  if (order == 1) {
+    deriv <- (outcome - predicted_val) / noise_var
+  } else if (order == 2) {
+    deriv <- 1 / noise_var
+  } else {
+    stop("3rd+ order derivative calculations are not supported")
+  }
   deriv <- as.vector(deriv)
   return(deriv)
 }
