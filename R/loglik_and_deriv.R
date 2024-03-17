@@ -1,4 +1,3 @@
-#' @export
 calc_loglik <- function(reg_coef, model){
   if (model$name == "linear"){
     return(calc_linear_loglik(reg_coef, model$design, model$outcome, model$noise_var))
@@ -9,7 +8,6 @@ calc_loglik <- function(reg_coef, model){
   }
 }
 
-#' @export
 calc_loglink_deriv <- function(reg_coef, model, order = 1){
   if (model$name == "linear"){
     return(calc_linear_loglink_deriv(reg_coef, model$design, model$outcome, model$noise_var, order))
