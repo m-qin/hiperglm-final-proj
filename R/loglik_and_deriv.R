@@ -50,8 +50,8 @@ calc_linear_loglik <- function(reg_coef, design, outcome, noise_var = 1) {
 }
 
 calc_linear_loglink_deriv <- function(reg_coef, design, outcome, noise_var = 1, order = 1){
-  predicted_val <- design %*% reg_coef
   if (order == 1) {
+    predicted_val <- design %*% reg_coef
     deriv <- (outcome - predicted_val) / noise_var
   } else if (order == 2) {
     deriv <- 1 / noise_var
