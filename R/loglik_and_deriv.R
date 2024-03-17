@@ -4,6 +4,8 @@ calc_loglik <- function(reg_coef, model){
     return(calc_linear_loglik(reg_coef, model$design, model$outcome, model$noise_var))
   } else if (model$name == "logit"){
     return(calc_logit_loglik(reg_coef, model$design, model$outcome))
+  } else if (model$name == "poisson"){
+    return(calc_poisson_loglik(reg_coef, model$design, model$outcome))
   }
 }
 
@@ -13,6 +15,8 @@ calc_loglink_deriv <- function(reg_coef, model, order = 1){
     return(calc_linear_loglink_deriv(reg_coef, model$design, model$outcome, model$noise_var))
   } else if (model$name == "logit"){
     return(calc_logit_loglink_deriv(reg_coef, model$design, model$outcome, order))
+  } else if (model$name == "poisson"){
+    return(calc_poisson_loglink_deriv(reg_coef, model$design, model$outcome, order))
   }
 }
 
@@ -34,8 +38,8 @@ calc_hessian <- function(reg_coef, model) {
 calc_hessian_inverse <- function(reg_coef, model){
   if (model$name == "linear"){
     return(calc_linear_hessian_inverse(reg_coef, model$design, model$outcome, model$noise_var))
-  } else if (model$name == "logit"){
-    return(calc_logit_hessian_inverse(reg_coef, model$design, model$outcome))
+  } else{
+    return(calc_nonlinear_hessian_inverse(reg_coef, model))
   }
 }
 
@@ -97,10 +101,31 @@ calc_logit_loglink_deriv <- function(reg_coef, design, outcome, order) {
   return(deriv)
 }
 
-calc_logit_hessian_inverse <- function(reg_coef, design, outcome) {
-  weight <- calc_logit_loglink_deriv(reg_coef, design, outcome, order = 2)
+calc_nonlinear_hessian_inverse <- function(reg_coef, model) {
+  design <- model$design; outcome <- model$outcome
+  weight <- calc_loglink_deriv(reg_coef, model, order = 2)
   sqrt_weighted_design <- outer(sqrt(weight), rep(1, ncol(design))) * design
   R <- qr_wrapper(sqrt_weighted_design)$R
   inverse <- - invert_gram_mat_from_qr(R)
   return(inverse)
+}
+
+calc_poisson_loglik <- function(reg_coef, design, outcome){
+  linear_pred <- design %*% reg_coef
+  predicted_counts <- exp(linear_pred)
+  loglik <- sum(outcome * linear_pred - predicted_counts)
+  return(loglik)
+}
+
+calc_poisson_loglink_deriv <- function(reg_coef, design, outcome, order){
+  predicted_counts <- exp(design %*% reg_coef)
+  if (order == 1){
+    deriv <- outcome - predicted_counts
+  } else if (order == 2){
+    deriv <- predicted_counts
+  } else {
+    stop("3rd+ order derivative calculations are not supported")
+  }
+  deriv <- as.vector(deriv)
+  return(deriv)
 }

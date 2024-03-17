@@ -17,6 +17,13 @@ test_that("linalg and optim least-sq coincide", {
   ))
 })
 
+test_that("newton and bfgs outputs coincide on linear model", {
+  out <- get_default_and_bfgs_optimizer_outputs("linear")
+  expect_true(are_all_close(
+    coef(out$via_default), coef(out$via_bfgs), abs_tol = 1e-2, rel_tol = 1e-2
+  ))
+})
+
 test_that("newton and bfgs outputs coincide on logit model", {
   out <- get_default_and_bfgs_optimizer_outputs("logit")
   expect_true(are_all_close(

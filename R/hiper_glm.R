@@ -1,6 +1,6 @@
 #' @export
 hiper_glm <- function(design, outcome, model_name = "linear", option = list(), noise_var = 1) {
-  supported_model <- c("linear", "logit")
+  supported_model <- c("linear", "logit", "poisson")
   if (!(model_name %in% supported_model)) {
     stop(sprintf("The model %s is not supported.", model_name))
   }
