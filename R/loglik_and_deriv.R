@@ -1,5 +1,5 @@
 calc_loglik <- function(model, ...) UseMethod("calc_loglik")
-calc_loglik.model <- function(model, reg_coef){
+calc_loglik.default <- function(model, reg_coef){
   if (model$name == "linear"){
     return(calc_linear_loglik(reg_coef, model$design, model$outcome, model$noise_var))
   } else if (model$name == "logit"){
@@ -10,7 +10,7 @@ calc_loglik.model <- function(model, reg_coef){
 }
 
 calc_loglink_deriv <- function(model, ...) UseMethod("calc_loglink_deriv")
-calc_loglink_deriv.model <- function(model, reg_coef, order = 1){
+calc_loglink_deriv.default <- function(model, reg_coef, order = 1){
   if (model$name == "linear"){
     return(calc_linear_loglink_deriv(reg_coef, model$design, model$outcome, model$noise_var, order))
   } else if (model$name == "logit"){

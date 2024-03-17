@@ -12,7 +12,7 @@ hiper_glm <- function(design, outcome, model_name = "linear", option = list(), n
 
 new_regression_model <- function(design, outcome, model_name, noise_var = 1) {
   model <- list(design = design, outcome = outcome, name = model_name, noise_var = noise_var)
-  class(model) <- "model"
+  class(model) <- paste(model_name, "model", sep = "_")
   return(model)
 }
 
