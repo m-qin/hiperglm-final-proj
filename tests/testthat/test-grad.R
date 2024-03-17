@@ -6,10 +6,10 @@ compare_analytical_and_numerical_grad <- function(
   design <- data$design; outcome <- data$outcome
   model <- new_regression_model(design, outcome, model_name)
   loglik_func <- function (coef) { 
-    calc_loglik(coef, model)
+    calc_loglik(model, coef)
   }
   grad_func <- function (coef) {
-    calc_grad(coef, model)
+    calc_grad(model, coef)
   }
   set.seed(loc_seed)
   grads_are_close <- TRUE

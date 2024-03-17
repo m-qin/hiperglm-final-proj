@@ -1,4 +1,5 @@
-calc_loglik <- function(reg_coef, model){
+calc_loglik <- function(model, ...) UseMethod("calc_loglik")
+calc_loglik.model <- function(model, reg_coef){
   if (model$name == "linear"){
     return(calc_linear_loglik(reg_coef, model$design, model$outcome, model$noise_var))
   } else if (model$name == "logit"){
@@ -8,7 +9,8 @@ calc_loglik <- function(reg_coef, model){
   }
 }
 
-calc_loglink_deriv <- function(reg_coef, model, order = 1){
+calc_loglink_deriv <- function(model, ...) UseMethod("calc_loglink_deriv")
+calc_loglink_deriv.model <- function(model, reg_coef, order = 1){
   if (model$name == "linear"){
     return(calc_linear_loglink_deriv(reg_coef, model$design, model$outcome, model$noise_var, order))
   } else if (model$name == "logit"){
@@ -18,26 +20,26 @@ calc_loglink_deriv <- function(reg_coef, model, order = 1){
   }
 }
 
-calc_grad <- function(reg_coef, model){
+calc_grad <- function(model, reg_coef){
   design <- model$design
-  loglink_deriv <- calc_loglink_deriv(reg_coef, model)
+  loglink_deriv <- calc_loglink_deriv(model, reg_coef)
   grad <- t(design) %*% loglink_deriv # formula for canonical links
   grad <- as.vector(grad)
   return(grad)
 }
 
-calc_hessian <- function(reg_coef, model) {
+calc_hessian <- function(model, reg_coef) {
   design <- model$design
-  loglink_deriv <- calc_loglink_deriv(reg_coef, model, order = 2)
+  loglink_deriv <- calc_loglink_deriv(model, reg_coef, order = 2)
   hess <- - t(design) %*% (outer(loglink_deriv, rep(1, ncol(design))) * design)
   return(hess)
 }
 
-calc_hessian_inverse <- function(reg_coef, model){
+calc_hessian_inverse <- function(model, reg_coef){
   if (model$name == "linear"){
     return(calc_linear_hessian_inverse(reg_coef, model$design, model$outcome, model$noise_var))
   } else{
-    return(calc_nonlinear_hessian_inverse(reg_coef, model))
+    return(calc_nonlinear_hessian_inverse(model, reg_coef))
   }
 }
 
@@ -105,9 +107,9 @@ calc_logit_loglink_deriv <- function(reg_coef, design, outcome, order) {
   return(deriv)
 }
 
-calc_nonlinear_hessian_inverse <- function(reg_coef, model) {
+calc_nonlinear_hessian_inverse <- function(model, reg_coef) {
   design <- model$design; outcome <- model$outcome
-  weight <- calc_loglink_deriv(reg_coef, model, order = 2)
+  weight <- calc_loglink_deriv(model, reg_coef, order = 2)
   sqrt_weighted_design <- outer(sqrt(weight), rep(1, ncol(design))) * design
   R <- qr_wrapper(sqrt_weighted_design)$R
   inverse <- - invert_gram_mat_from_qr(R)

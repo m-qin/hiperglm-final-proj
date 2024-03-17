@@ -12,7 +12,7 @@ hiper_glm <- function(design, outcome, model_name = "linear", option = list(), n
 
 new_regression_model <- function(design, outcome, model_name, noise_var = 1) {
   model <- list(design = design, outcome = outcome, name = model_name, noise_var = noise_var)
-  class(model) <- paste(model_name, "model", sep = "_")
+  class(model) <- "model"
   return(model)
 }
 
@@ -49,11 +49,11 @@ solve_via_newton <- function(model, option) {
   n_iter <- 0L
   max_iter_reached <- FALSE
   converged <- FALSE
-  curr_loglik <- calc_loglik(coef_est, model)
+  curr_loglik <- calc_loglik(model, coef_est)
   while (!(converged || max_iter_reached)) {
     prev_loglik <- curr_loglik
-    coef_est <- take_one_newton_step(coef_est, model, option)
-    curr_loglik <- calc_loglik(coef_est, model)
+    coef_est <- take_one_newton_step(model, coef_est, option)
+    curr_loglik <- calc_loglik(model, coef_est)
     converged <- (
       2 * abs(curr_loglik - prev_loglik) < (abs_tol + rel_tol * abs(curr_loglik))
     )
@@ -63,18 +63,18 @@ solve_via_newton <- function(model, option) {
   if (max_iter_reached && !converged) {
     warning("Newton's method did not converge. The estimates may be meaningless.")
   }
-  cov_est <- - calc_hessian_inverse(coef_est, model)
+  cov_est <- - calc_hessian_inverse(model, coef_est)
   return(list(
     coef = coef_est, cov = cov_est, 
     converged = converged, n_iter = n_iter
   ))
 }
 
-take_one_newton_step <- function(coef_est, model, option) {
+take_one_newton_step <- function(model, coef_est, option) {
   solver <- ifelse(is.null(option$solver), "weighted-least-sq", option$solver)
   if (solver == "weighted-least-sq") {
-    loglink_grad <- calc_loglink_deriv(coef_est, model, order = 1)
-    weight <- calc_loglink_deriv(coef_est, model, order = 2)
+    loglink_grad <- calc_loglink_deriv(model, coef_est, order = 1)
+    weight <- calc_loglink_deriv(model, coef_est, order = 2)
     if (any(weight == 0)) {
       stop("Exact 0 or 1 found in predicted probability while solving for MLE.")
         # TODO: pursue alternative path forward in this case. Maybe just fall 
@@ -83,8 +83,8 @@ take_one_newton_step <- function(coef_est, model, option) {
     ls_target_vec <- loglink_grad / weight
     coef_update <- solve_least_sq_via_qr(model$design, ls_target_vec, weight)$solution
   } else { # if solver == "normal-eq"
-    grad <- calc_grad(coef_est, model)
-    hess <- calc_hessian(coef_est, model)
+    grad <- calc_grad(model, coef_est)
+    hess <- calc_hessian(model, coef_est)
     coef_update <- - solve(hess, grad)
   }
   coef_est <- coef_est + coef_update
@@ -94,10 +94,10 @@ take_one_newton_step <- function(coef_est, model, option) {
 solve_via_optim <- function(model, option) {
   init_coef <- rep(0, ncol(model$design))
   obj_fn <- function (coef) {
-    calc_loglik(coef, model)
+    calc_loglik(model, coef)
   }
   obj_grad <- function (coef) {
-    calc_grad(coef, model)
+    calc_grad(model, coef)
   }
   optim_result <- stats::optim(
     init_coef, obj_fn, obj_grad, method = option$mle_solver,
