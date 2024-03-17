@@ -36,3 +36,9 @@ test_that("logit model's analytical gradient is close to numerical one", {
     compare_analytical_and_numerical_grad("logit")
   )
 })
+
+test_that("poisson model's analytical gradient is close to numerical one", {
+  expect_true(
+    compare_analytical_and_numerical_grad("poisson")
+  )
+})
