@@ -1,7 +1,7 @@
 # Solve for the L2-norm minimizer of sqrt(weight) * (X %*% beta - y)
 solve_least_sq_via_qr <- function(X, y, weight = NULL, use_eigen = TRUE) {
   if (!is.null(weight)) {
-    X <- outer(sqrt(weight), rep(1, ncol(X))) * X
+    X <- sqrt(weight) * X
     y <- sqrt(weight) * y
   }
   y <- as.numeric(y) # Ensure `double`

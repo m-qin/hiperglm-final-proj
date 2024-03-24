@@ -50,8 +50,9 @@ simulate_data <- function(
     coef_true <- c(intercept, coef_true)
     design <- cbind(rep(1, n_obs), design)
   }
-  expected_mean <- as.vector(design %*% coef_true)
+  linear_pred <- as.vector(design %*% coef_true)
   if (model_name == 'linear') {
+    expected_mean <- linear_pred
     signal_to_noise <- option$signal_to_noise
     if (is.null(signal_to_noise)) {
       signal_to_noise <- 0.1
@@ -59,9 +60,9 @@ simulate_data <- function(
     noise_magnitude <- sqrt(var(expected_mean) / signal_to_noise^2)
     noise <- noise_magnitude * rnorm(n_obs)
     outcome <- expected_mean + noise 
-  } else {
+  } else if (model_name == 'logit') {
     n_trial <- option$n_trial
-    prob <- 1 / (1 + exp(-expected_mean))
+    prob <- 1 / (1 + exp(-linear_pred))
     # Object type of `outcome` returned by this function is variable. One should 
     # in general be careful about introducing this type of inconsistency, but 
     # sometimes one might find it the most natural and/or reasonable thing to do.
@@ -71,6 +72,10 @@ simulate_data <- function(
       n_success <- rbinom(n_obs, n_trial, prob)
       outcome <- list(n_success = n_success, n_trial = n_trial)
     }
-  }
-  return(list(design = design, outcome = outcome, coef_true = coef_true))
+  } else if (model_name == 'poisson') {
+    expected_mean <- exp(linear_pred)
+    outcome <- rpois(n_obs, expected_mean)
+  } else stop(paste(model_name, "model is not currently supported;",
+                    "use 'linear', 'logit', or 'poisson'"))
+  return(list(design = design, outcome = outcome, coef_true = coef_true, model_name = model_name))
 }

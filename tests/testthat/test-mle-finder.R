@@ -17,8 +17,22 @@ test_that("linalg and optim least-sq coincide", {
   ))
 })
 
+test_that("newton and bfgs outputs coincide on linear model", {
+  out <- get_default_and_bfgs_optimizer_outputs("linear")
+  expect_true(are_all_close(
+    coef(out$via_default), coef(out$via_bfgs), abs_tol = 1e-2, rel_tol = 1e-2
+  ))
+})
+
 test_that("newton and bfgs outputs coincide on logit model", {
   out <- get_default_and_bfgs_optimizer_outputs("logit")
+  expect_true(are_all_close(
+    coef(out$via_default), coef(out$via_bfgs), abs_tol = 1e-2, rel_tol = 1e-2
+  ))
+})
+
+test_that("newton and bfgs outputs coincide on poisson model", {
+  out <- get_default_and_bfgs_optimizer_outputs("poisson")
   expect_true(are_all_close(
     coef(out$via_default), coef(out$via_bfgs), abs_tol = 1e-2, rel_tol = 1e-2
   ))
@@ -27,13 +41,14 @@ test_that("newton and bfgs outputs coincide on logit model", {
 test_that("vanilla/weighted least-sq Newton updates coincide", {
   n_obs <- 32; n_pred <- 4
   data <- simulate_data(n_obs, n_pred, model_name = 'logit', seed = 1918)
-  design <- data$design; outcome <- data$outcome
+  design <- data$design; outcome <- data$outcome; model_name = data$model_name
+  model <- new_regression_model(design, outcome, model_name)
   set.seed(615)
   init_coef <- rnorm(n_pred)
   wls_updated_coef <- 
-    take_one_newton_step(init_coef, design, outcome, solver = "weighted-leqst-sq")
+    take_one_newton_step(model, init_coef, option = list(solver = "weighted-least-sq"))
   ne_updated_coef <- 
-    take_one_newton_step(init_coef, design, outcome, solver = "normal-eq")
+    take_one_newton_step(model, init_coef, option = list(solver = "normal-eq"))
   expect_true(are_all_close(wls_updated_coef, ne_updated_coef))
 })
 
